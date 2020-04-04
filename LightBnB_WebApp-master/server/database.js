@@ -20,7 +20,7 @@ const getUserWithEmail = function(email) {
   return pool.query(`
   SELECT *
   FROM users
-  WHERE users.email = $1
+  WHERE users.email = $1;
   `, values)
     .then(res => {
       if (res.rows.length === 0) {
@@ -42,7 +42,7 @@ const getUserWithId = function(id) {
   return pool.query(`
   SELECT *
   FROM users
-  WHERE users.id = $1
+  WHERE users.id = $1;
   `, values)
     .then(res => {
       if (res.rows.length === 0) {
@@ -84,7 +84,16 @@ exports.addUser = addUser;
  * @return {Promise<[{}]>} A promise to the reservations.
  */
 const getAllReservations = function(guest_id, limit = 10) {
-  return getAllProperties(null, 2);
+  const values = [guest_id, 10];
+  return pool.query(`
+  SELECT *
+  FROM users
+  JOIN reservations ON users.id = $1
+  LIMIT $2;
+  `)
+    .then(res => {
+      return res.rows;
+    });
 }
 exports.getAllReservations = getAllReservations;
 
