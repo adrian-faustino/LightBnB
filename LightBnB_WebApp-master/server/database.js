@@ -16,6 +16,7 @@ const pool = new Pool({
  * @return {Promise<{}>} A promise to the user.
  */
 const getUserWithEmail = function(email) {
+  console.log('query email', email)
   const values = [email];
   return pool.query(`
   SELECT *
@@ -26,6 +27,7 @@ const getUserWithEmail = function(email) {
       if (res.rows.length === 0) {
         return null;
       } else {
+        console.log(res.rows)
         return res.rows;
       }
     });
@@ -106,10 +108,47 @@ exports.getAllReservations = getAllReservations;
  * @return {Promise<[{}]>}  A promise to the properties.
  */
 const getAllProperties = function(options, limit = 10) {
-  return pool.query(`
-  SELECT * FROM properties
-  LIMIT $1
-  `, [limit])
+  const values = [];
+  let queryString = `
+  SELECT * properties.*, avg(property_reviews.rating) as average_rating
+  FROM properties
+  JOIN propertiy_reviews ON properties.id = property_id
+  `;
+
+  if (options.city || options.owner_id || options.minimum_price_per_night, options.maximum_price_per_night, minimum_rating) {
+    queryString += ' WHERE ';
+
+    if (options.city) {
+      values.push(`%${options.city}%`);
+      queryString += `city LIKE $${values.length} AND `
+    }
+    
+    if (options.ownder_id) {
+      values.push(`%${options.ownder_id}%`);
+      queryString += `ownder_id LIKE $${values.length} AND `
+    }
+  
+    if (options.minimum_price_per_night) {
+      values.push(`%${options.minimum_price_per_night}%`);
+      queryString += `minimum_price_per_night LIKE $${values.length} AND `
+    }
+  
+    if (options.maximum_price_per_night) {
+      values.push(`%${options.maximum_price_per_night}%`);
+      queryString += `maximum_price_per_night LIKE $${values.length} AND `
+    }
+  
+    if (options.minimum_rating) {
+      values.push(`%${options.minimum_rating}%`);
+      queryString += `minimum_rating LIKE $${values.length} AND `
+    }
+
+    queryString += `1 = 1 LIMIT ${limit};`
+  } else {
+    queryString += ` LIMIT ${limit};`
+  }
+
+  return pool.query(queryString, values)
   .then(res => res.rows);
 }
 exports.getAllProperties = getAllProperties;
